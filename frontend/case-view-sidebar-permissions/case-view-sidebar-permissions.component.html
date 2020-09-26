@@ -1,0 +1,132 @@
+<div class="loading-wrapper" *ngIf="loading | async; else permissions">
+  <div class="spinner-svg"></div>
+</div>
+
+<ng-template #permissions>
+  <div *ngIf="hasRole(roles.MANAGER)" class="d-flex justify-content-center mb-2">
+    <button class="btn btn-primary" (click)="openAddTeamMemberModal(addTeamMember)" cok-stop-propagation>
+      Add Team Member
+    </button>
+  </div>
+
+  <div>
+    <span class="header header-viewer">Viewer</span>
+    <span class="header header-editor">Editor</span>
+    <span class="header header-manager">Manager</span>
+  </div>
+  <div *ngFor="let user of caseUsers" class="mb-2 mr-2">
+    <cok-case-view-sidebar-permission-item
+      [user]="user"
+      [caseId]="caseChild.id"
+      [caseRole]="userCaseRoles.get(user.id)?.role"
+      (setCaseRole)="setCaseRole(user, $event)"
+    >
+    </cok-case-view-sidebar-permission-item>
+  </div>
+  <div class="mb-5"></div>
+</ng-template>
+
+<ng-template #addTeamMemberTypeahead let-model="item" let-index="index">
+  <h5>{{ model.firstName }} {{ model.lastName }} ({{ model.email }})</h5>
+</ng-template>
+
+<ng-template #addTeamMember>
+  <div class="modal-header">
+    <h5 class="modal-title pull-left">Invite Team Member</h5>
+    <button type="button" class="close pull-right" aria-label="Close" (click)="modalRef.hide()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="inviteForm" (ngSubmit)="inviteMember()" autocomplete="off">
+      <div class="form-row">
+        <div class="form-group col-6" [class.has-error]="hasInviteError(firstName)">
+          <label for="inputFirstName">First Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="inputFirstName"
+            placeholder="Fist Name"
+            [formControl]="firstName"
+            [typeahead]="allUsers"
+            typeaheadOptionField="firstName"
+            [typeaheadSelectFirstItem]="false"
+            [typeaheadItemTemplate]="addTeamMemberTypeahead"
+            (typeaheadOnSelect)="addMemberTypeaheadSelected($event.item)"
+            autofocus
+          />
+          <div *ngIf="hasInviteError(firstName)">
+            <p *ngIf="firstName.errors!.required" class="maxsize-error mt-1">First name is required.</p>
+          </div>
+        </div>
+        <div class="form-group col-6" [class.has-error]="hasInviteError(lastName)">
+          <label for="inputLastName">Last Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="inputLastName"
+            placeholder="Last Name"
+            [formControl]="lastName"
+            [typeahead]="allUsers"
+            typeaheadOptionField="lastName"
+            [typeaheadSelectFirstItem]="false"
+            [typeaheadItemTemplate]="addTeamMemberTypeahead"
+            (typeaheadOnSelect)="addMemberTypeaheadSelected($event.item)"
+          />
+          <div *ngIf="hasInviteError(lastName)">
+            <p *ngIf="lastName.errors!.required" class="maxsize-error mt-1">Last name is required.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group col" [class.has-error]="hasInviteError(email)">
+          <label for="inputEmail">Email</label>
+          <input
+            type="text"
+            class="form-control"
+            id="inputEmail"
+            placeholder="Email"
+            [formControl]="email"
+            [typeahead]="allUsers"
+            typeaheadOptionField="email"
+            [typeaheadSelectFirstItem]="false"
+            [typeaheadItemTemplate]="addTeamMemberTypeahead"
+            (typeaheadOnSelect)="addMemberTypeaheadSelected($event.item)"
+          />
+          <div *ngIf="hasInviteError(email)">
+            <p *ngIf="email.errors!.required" class="maxsize-error mt-1">Email is required.</p>
+            <p *ngIf="email.errors!.email" class="maxsize-error mt-1">Email is invalid.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row mb-4">
+        <div class="from-group col d-flex">
+          <div class="mr-3 my-auto">Role</div>
+
+          <div class="w-100">
+            <div class="w-100">
+              <span class="header header-slider-viewer">Viewer</span>
+              <span class="header header-slider-editor">Editor</span>
+              <span class="header header-slider-manager">Manager</span>
+            </div>
+            <div class="d-flex mt-3">
+              <cok-case-view-sidebar-permission-slider
+                class="slider"
+                [caseId]="caseChild.id"
+                [caseRole]="inviteCaseRole"
+                [defaultDisabled]="false"
+                (setCaseRole)="setInviteCaseRole($event)"
+              ></cok-case-view-sidebar-permission-slider>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <button type="submit" class="btn btn-primary" [class.processing]="isInviteBusy">Invite</button>
+      </div>
+    </form>
+  </div>
+</ng-template>

@@ -1,0 +1,39 @@
+ng-select {
+  width: 50%;
+}
+
+.header {
+  position: relative;
+  font-weight: bold;
+}
+
+.header-viewer {
+  left: 39%;
+}
+
+.header-editor {
+  left: 52%;
+}
+
+.header-manager {
+  left: 61%;
+}
+
+.header-slider-viewer {
+  left: 1%;
+}
+
+.header-slider-editor {
+  left: 35%;
+}
+
+.header-slider-manager {
+  left: 66%;
+}
+
+.slider {
+  flex-grow: 1;
+  background-color: white;
+  position: relative;
+  align-items: center;
+}

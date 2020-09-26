@@ -1,0 +1,142 @@
+<cok-sidebar [shorter]="shorter" (clickOutside)="closeSidebar()">
+  <div class="b-person-detail" *ngIf="caseChild$ | async as caseChild; else loading">
+    <div class="m-person-detail__inner">
+      <div class="m-person-detail__info">
+        <div class="b-person-detail-info">
+          <div class="b-person-detail-info__thumb">
+            <img [src]="caseChild.person.picture | avatar" />
+          </div>
+
+          <div class="b-person-detail-info__content">
+            <h3 class="b-person-detail-info__title">{{ caseChild.person.fullName }}</h3>
+            <div class="b-person-detail-info__desc">
+              <dl *ngIf="caseChild.caseStatus && caseChild.caseStatus.name" class="blue-text">
+                <dt>Case Status</dt>
+                <dd>{{ caseChild.caseStatus.name }}</dd>
+              </dl>
+              <dl
+                *ngIf="
+                  caseChild.childStatus && caseChild.childStatus.name && caseChild.caseStatus && caseChild.caseStatus.representsClosure
+                "
+                class="blue-text"
+              >
+                <dt>Child Status</dt>
+                <dd>{{ caseChild.childStatus.name }}</dd>
+              </dl>
+              <dl *ngIf="caseChild.person.birthdayRaw; let birthday">
+                <dt>Birth Date</dt>
+                <dd>{{ birthday }}</dd>
+              </dl>
+              <dl *ngIf="caseChild.person | age; let ageString">
+                <dt>Age</dt>
+                <dd>{{ ageString }}</dd>
+              </dl>
+              <dl *ngIf="caseChild.person.gender">
+                <dt>Gender Identity</dt>
+                <dd>{{ caseChild.person.gender }}</dd>
+              </dl>
+              <dl *ngIf="caseChild.person.addresses.length > 0">
+                <dt>Residence</dt>
+                <dd>
+                  <a
+                    href="{{ caseChild.person.addresses[0] | address | googleMapsUrl }}"
+                    target="_blank"
+                    class="url address"
+                    tooltip="{{ caseChild.person.addresses[0] | address: false }}"
+                    >{{ caseChild.person.addresses[0] | address: false }}</a
+                  >
+                </dd>
+              </dl>
+              <dl *ngIf="caseChild.fosterCare">
+                <dt>Start Date</dt>
+                <dd>{{ caseChild.fosterCare | date: 'mediumDate':'+0' }}</dd>
+              </dl>
+            </div>
+            <div *ngIf="hasRole(roles.VIEWER)" class="mt-10">
+              <button *ngIf="insideBuilder === false" class="btn btn-primary" (click)="workOnCaseClicked()">Work on Case</button>
+            </div>
+          </div>
+          <div class="b-person-detail-info__tools" (click)="hasRole(roles.EDITOR) ? openEditForm() : requestCaseEditorAccess('Edit Case')">
+            <span class="btn-person-detail-info-edit js-person-detail-info-edit"
+              ><fa-icon
+                [icon]="faPencilAlt"
+                [tooltip]="hasRole(roles.EDITOR) ? 'Edit Case Details' : ''"
+                placement="left"
+                container="body"
+                [ngStyle]="!hasRole(roles.EDITOR) && { opacity: '0.4', cursor: 'not-allowed' }"
+              ></fa-icon
+            ></span>
+          </div>
+        </div>
+      </div>
+      <div class="m-person-detail__content mt-3">
+        <div class="b-person-detail-list">
+          <ul class="t-person-detail-list">
+            <li>
+              <a [class.active]="activeTab === tabs.ENGAGEMENT" (click)="activeTab = tabs.ENGAGEMENT">Engagement</a>
+            </li>
+            <li *ngIf="hasRole(roles.VIEWER)">
+              <a [class.active]="activeTab === tabs.PERMISSION" (click)="activeTab = tabs.PERMISSION">Permissions</a>
+            </li>
+            <li>
+              <a [class.active]="activeTab === tabs.HIGHLIGHT" (click)="activeTab = tabs.HIGHLIGHT">Highlights</a>
+            </li>
+          </ul>
+
+          <!-- Highlight -->
+          <div class="t-person-detail-cont" *ngIf="activeTab === tabs.HIGHLIGHT">
+            <perfect-scrollbar>
+              <div class="s-person-detail-details">
+                <div class="s-person-detail-details__item" *ngIf="caseChild.person.notes && caseChild.person.notes != ''">
+                  <div class="s-person-detail-details__body" [innerHTML]="caseChild.person.notes | textarea"></div>
+                </div>
+              </div>
+            </perfect-scrollbar>
+          </div>
+
+          <!-- Engagement -->
+          <div class="t-person-detail-cont" *ngIf="activeTab === tabs.ENGAGEMENT">
+            <perfect-scrollbar>
+              <ul class="l-person-engagement" *ngIf="engagementStatistics">
+                <li class="l-person-engagement__item">
+                  <div class="l-person-engagement__icon"><fa-icon [icon]="faLink"></fa-icon></div>
+                  <div class="l-person-engagement__content">
+                    <span class="l-person-engagement__count">{{ relationshipsCount }} </span>
+                    <span class="l-person-engagement__label">Connection{{ relationshipsCount === 1 ? '' : 's' }}</span>
+                  </div>
+                </li>
+
+                <li class="l-person-engagement__item" *ngFor="let engagement of engagementStatistics!.engagements">
+                  <div class="l-person-engagement__icon"><fa-icon [icon]="engagement.icon"></fa-icon></div>
+                  <div class="l-person-engagement__content">
+                    <span class="l-person-engagement__count">{{ engagement.count }} </span>
+                    <span class="l-person-engagement__label">{{ engagement.name }}</span>
+                  </div>
+                </li>
+              </ul>
+              <div class="container-fluid" *ngIf="isEngagementStatisticsLoading">
+                <div class="wrap">
+                  <div class="loading-wrapper">
+                    <div class="spinner-svg"></div>
+                  </div>
+                </div>
+              </div>
+            </perfect-scrollbar>
+          </div>
+
+          <!-- Permissions -->
+          <div class="t-person-detail-cont" *ngIf="activeTab === tabs.PERMISSION">
+            <perfect-scrollbar>
+              <cok-case-view-sidebar-permissions [caseChild]="caseChild"></cok-case-view-sidebar-permissions>
+            </perfect-scrollbar>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ng-template #loading>
+    <div class="loading-wrapper">
+      <div class="spinner-svg"></div>
+    </div>
+  </ng-template>
+</cok-sidebar>
